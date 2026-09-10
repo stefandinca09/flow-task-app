@@ -1,12 +1,4 @@
 {
-  "buildCommand": "echo 'Static app'",
-  "outputDirectory": ".",
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/TODO.html"
-    }
-  ]
+  "buildCommand": "mkdir -p public && cp TODO.html public/index.html && cp -r assets public/",
+  "outputDirectory": "public"
 }
