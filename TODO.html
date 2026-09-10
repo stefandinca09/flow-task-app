@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow</title>
+    <link rel="icon" type="image/png" href="assets/images/flow-icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#C291D6">
+    <meta name="description" content="Manage your daily tasks, habits, and plans with Flow">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Flow">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-gradient-1: #EFE0D4;
+            --bg-gradient-2: #E8D5C8;
+            --text-dark: #333;
+            --text-light: #999;
+            --bg-card: white;
+            --border-color: #f0f0f0;
+            --accent-color: #667eea;
+        }
+
+        body.dark-mode {
+            --bg-gradient-1: #1a1a2e;
+            --bg-gradient-2: #16213e;
+            --text-dark: #e0e0e0;
+            --text-light: #999;
+            --bg-card: #2d2d44;
+            --border-color: #3d3d5c;
+            --accent-color: #34d399;
+        }
+
+        body {
+            font-family: 'Roboto Condensed', sans-serif;
+            background: linear-gradient(rgba(255,255,255,0.35), rgba(255,255,255,0.35)), url('assets/images/neuro-protocols-background-light.webp');
+            background-size: cover;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-position: center bottom;
+            filter: brightness(0.9);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: var(--text-dark);
+            transition: background 0.3s, color 0.3s, filter 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('assets/images/neuro-protocols-background-dark.webp');
+            filter: brightness(0.95);
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            max-width: 1400px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            position: relative;
+            height: auto;
+        }
+
+        .draggable-card {
+            cursor: grab;
+            transition: box-shadow 0.2s;
+            position: relative;
+        }
+
+        .draggable-card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .draggable-card.dragging {
+            cursor: grabbing;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+            z-index: 1000;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .sections-wrapper {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .protocol-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            flex: 0 0 auto;
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            border-top: 5px solid #C291D6;
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+
+        body.dark-mode .protocol-section {
+            border-right-color: rgba(255,255,255,0.1);
+        }
+
+        .protocol-section h2 {
+            color: var(--text-dark);
+            font-size: 0.9em;
+            margin-bottom: 12px;
+            padding-bottom: 0;
+            border-bottom: none;
+            transition: color 0.3s;
+            font-weight: 600;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        body.dark-mode .protocol-section h2 {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+
+        .protocol-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .protocol-item {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            font-size: 0.9em;
+        }
+
+        .protocol-item.dragging {
+            opacity: 0.5;
+        }
+
+        .protocol-list.drag-over {
+            background: var(--accent-color);
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .protocol-item.drag-over-top {
+            border-top: 3px solid var(--accent-color);
+        }
+
+        .protocol-item.drag-over-bottom {
+            border-bottom: 3px solid var(--accent-color);
+        }
+
+        .delete-protocol-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .protocol-item:hover .delete-protocol-btn {
+            opacity: 1;
+        }
+
+        .protocol-number {
+            color: var(--accent-color);
+            font-weight: bold;
+            min-width: 20px;
+            font-size: 0.9em;
+        }
+
+        .protocol-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .protocol-item label {
+            cursor: pointer;
+            color: var(--text-dark);
+            font-size: 0.9em;
+            line-height: 1.3;
+        }
+
+        .protocol-item input[type="checkbox"]:checked + label {
+            color: var(--text-light);
+            text-decoration: line-through;
+        }
+
+        .add-protocol {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+            padding-top: 0;
+            border-top: none;
+            flex-wrap: wrap;
+        }
+
+        .add-protocol input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.65em;
+            font-family: 'Roboto Condensed', sans-serif;
+            background: var(--bg-card);
+            color: var(--text-dark);
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .add-protocol button {
+            padding: 8px 16px;
+            background: #C291D6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75em;
+            font-family: 'Roboto Condensed', sans-serif;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(194, 145, 214, 0.3);
+        }
+
+        .add-protocol button:hover {
+            background: #B17AC5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(194, 145, 214, 0.5);
+        }
+
+        h1 {
+            color: var(--text-dark);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            text-shadow: none;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            width: 100%;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+            border-top: 5px solid transparent;
+            overflow: hidden;
+        }
+
+        .section.today {
+            border-top-color: #E17055;
+        }
+
+        .section.week {
+            border-top-color: #F4A460;
+        }
+
+        .section.backlog {
+            border-top-color: #87CEEB;
+        }
+
+        .section h2 {
+            color: var(--text-dark);
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: none;
+            transition: color 0.3s;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .task-item.dragging {
+            opacity: 0.5;
+        }
+
+        .task-list.drag-over {
+            background: var(--accent-color);
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .task-item.drag-over-top {
+            border-top: 3px solid var(--accent-color);
+        }
+
+        .task-item.drag-over-bottom {
+            border-bottom: 3px solid var(--accent-color);
+        }
+
+        .task-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .task-item input[type="checkbox"]:checked + label {
+            color: var(--text-light);
+            text-decoration: line-through;
+        }
+
+        .task-number {
+            color: var(--accent-color);
+            font-weight: bold;
+            min-width: 25px;
+            font-size: 0.95em;
+        }
+
+        .task-item label {
+            flex: 1;
+            cursor: pointer;
+            color: var(--text-dark);
+            font-size: 0.9em;
+        }
+
+        .add-task {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+
+        .add-task input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+
+        .add-task button {
+            padding: 8px 16px;
+            background: #E17055;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75em;
+            font-family: 'Roboto Condensed', sans-serif;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(225, 112, 85, 0.2);
+        }
+
+        .add-task button:hover {
+            background: #D04D3D;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(225, 112, 85, 0.4);
+        }
+
+        .section.week .add-task button {
+            background: #F4A460;
+            font-size: 0.75em;
+            font-family: 'Roboto Condensed', sans-serif;
+            box-shadow: 0 2px 8px rgba(244, 164, 96, 0.2);
+        }
+
+        .section.week .add-task button:hover {
+            background: #E89448;
+            box-shadow: 0 4px 12px rgba(244, 164, 96, 0.4);
+        }
+
+        .section.backlog .add-task button {
+            background: #87CEEB;
+            font-size: 0.75em;
+            font-family: 'Roboto Condensed', sans-serif;
+            box-shadow: 0 2px 8px rgba(135, 206, 235, 0.2);
+        }
+
+        .section.backlog .add-task button:hover {
+            background: #6FBFD8;
+            box-shadow: 0 4px 12px rgba(135, 206, 235, 0.4);
+        }
+
+        .progress {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5em;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: background 0.3s, transform 0.2s;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .plans-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: background 0.3s;
+            border-top: 5px solid #C291D6;
+            max-width: 1400px;
+            margin: 20px auto 0;
+            overflow: hidden;
+        }
+
+        .plans-section h2 {
+            color: var(--text-dark);
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            padding-bottom: 0;
+            border-bottom: none;
+            transition: color 0.3s;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .plans-list {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            list-style: none;
+        }
+
+        .plan-item {
+            flex: 0 0 auto;
+            min-width: 250px;
+            max-width: 250px;
+            padding: 12px;
+            background: var(--border-color);
+            border-radius: 8px;
+            cursor: move;
+            user-select: none;
+            transition: background 0.2s;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            draggable: true;
+        }
+
+        .plan-item:hover {
+            background: var(--accent-color);
+            opacity: 0.8;
+        }
+
+        .plan-item.dragging {
+            opacity: 0.5;
+        }
+
+        .plan-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .plan-item label {
+            flex: 1;
+            cursor: pointer;
+            color: var(--text-dark);
+            font-size: 0.95em;
+            word-break: break-word;
+        }
+
+        .plan-item input[type="checkbox"]:checked + label {
+            color: var(--text-light);
+            text-decoration: line-through;
+        }
+
+        .plan-delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 0.75em;
+            opacity: 0;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .plan-item:hover .plan-delete-btn {
+            opacity: 1;
+        }
+
+        .plan-delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .add-plan {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .add-plan input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-family: 'Roboto Condensed', sans-serif;
+            background: var(--bg-card);
+            color: var(--text-dark);
+        }
+
+        .add-plan button {
+            padding: 8px 16px;
+            background: #C291D6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75em;
+            font-family: 'Roboto Condensed', sans-serif;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(194, 145, 214, 0.3);
+        }
+
+        .add-plan button:hover {
+            background: #B17AC5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(194, 145, 214, 0.5);
+        }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, var(--accent-color) 50%);
+            border-radius: 0 0 16px 0;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        .draggable-card:hover .resize-handle {
+            opacity: 0.7;
+        }
+
+        .resize-handle:active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleDarkMode()">🌙</button>
+
+    <img src="assets/images/flow-logo.png" alt="Flow" style="height: 80px; margin-bottom: 30px;">
+
+    <div class="main-layout">
+        <div class="protocol-section" id="card-protocol">
+            <div class="resize-handle"></div>
+            <h2><span style="font-size: 1.2em;">✓</span>PROTOCOL</h2>
+            <ul class="protocol-list" id="protocol">
+                <li class="protocol-item" draggable="true">
+                    <span class="protocol-number">1.</span>
+                    <input type="checkbox" id="protocol-1" onchange="saveProtocol()">
+                    <label class="editable-label">HIDRATARE</label>
+                    <button class="delete-protocol-btn" onclick="deleteProtocol(this)">Sterge</button>
+                </li>
+                <li class="protocol-item" draggable="true">
+                    <span class="protocol-number">2.</span>
+                    <input type="checkbox" id="protocol-2" onchange="saveProtocol()">
+                    <label class="editable-label">SOARE</label>
+                    <button class="delete-protocol-btn" onclick="deleteProtocol(this)">Sterge</button>
+                </li>
+                <li class="protocol-item" draggable="true">
+                    <span class="protocol-number">3.</span>
+                    <input type="checkbox" id="protocol-3" onchange="saveProtocol()">
+                    <label class="editable-label">EXERCITII & FORȚĂ</label>
+                    <button class="delete-protocol-btn" onclick="deleteProtocol(this)">Sterge</button>
+                </li>
+                <li class="protocol-item" draggable="true">
+                    <span class="protocol-number">4.</span>
+                    <input type="checkbox" id="protocol-4" onchange="saveProtocol()">
+                    <label class="editable-label">PLIMBARE</label>
+                    <button class="delete-protocol-btn" onclick="deleteProtocol(this)">Sterge</button>
+                </li>
+            </ul>
+            <div class="add-protocol">
+                <input type="text" id="input-protocol" placeholder="Protocol nou..." style="flex: 1; padding: 6px 8px; font-size: 0.85em;">
+                <button onclick="addProtocol()">Adaugă</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="sections-wrapper">
+        <div class="section today" id="card-today">
+            <div class="resize-handle"></div>
+            <h2><span style="font-size: 1.2em;">☀️</span>AZI</h2>
+            <h3 id="today-date" style="text-align: center; font-size: 0.9em; color: var(--text-light); margin-bottom: 15px; font-weight: normal;"></h3>
+            <ul class="task-list" id="today">
+                <li class="task-item" draggable="true">
+                    <span class="task-number">1.</span>
+                    <input type="checkbox" id="task-1">
+                    <label class="editable-label">sectiune weekend</label>
+                    <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+                </li>
+                <li class="task-item" draggable="true">
+                    <span class="task-number">2.</span>
+                    <input type="checkbox" id="task-2">
+                    <label class="editable-label">cache aplicatie web</label>
+                    <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+                </li>
+                <li class="task-item" draggable="true">
+                    <span class="task-number">3.</span>
+                    <input type="checkbox" id="task-3">
+                    <label class="editable-label">backup aplicatie</label>
+                    <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+                </li>
+            </ul>
+            <div class="add-task">
+                <input type="text" id="input-today" placeholder="Obiectiv nou...">
+                <button onclick="addTask('today')">Adaugă</button>
+            </div>
+            <div class="progress" id="progress-today"></div>
+        </div>
+
+        <div class="section week" id="card-week">
+            <div class="resize-handle"></div>
+            <h2><span style="font-size: 1.2em;">📅</span>MÂINE</h2>
+            <h3 id="week-date" style="text-align: center; font-size: 0.9em; color: var(--text-light); margin-bottom: 15px; font-weight: normal;"></h3>
+            <ul class="task-list" id="week">
+                <li class="task-item" draggable="true">
+                    <span class="task-number">1.</span>
+                    <input type="checkbox" id="task-3">
+                    <label class="editable-label" data-type="task" for="task-3">Task 3</label>
+                    <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+                </li>
+                <li class="task-item" draggable="true">
+                    <span class="task-number">2.</span>
+                    <input type="checkbox" id="task-4">
+                    <label class="editable-label" data-type="task" for="task-4">Task 4</label>
+                    <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+                </li>
+            </ul>
+            <div class="add-task">
+                <input type="text" id="input-week" placeholder="Obiectiv nou...">
+                <button onclick="addTask('week')">Adaugă</button>
+            </div>
+            <div class="progress" id="progress-week"></div>
+        </div>
+
+        <div class="section backlog" id="card-backlog">
+            <div class="resize-handle"></div>
+            <h2><span style="font-size: 1.2em;">🗓️</span>SAPTAMANA VIITOARE</h2>
+            <h3 id="backlog-date" style="text-align: center; font-size: 0.9em; color: var(--text-light); margin-bottom: 15px; font-weight: normal;"></h3>
+            <ul class="task-list" id="backlog">
+                <li class="task-item" draggable="true">
+                    <span class="task-number">1.</span>
+                    <input type="checkbox" id="task-5">
+                    <label class="editable-label" data-type="task" for="task-5">Task 5</label>
+                    <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+                </li>
+                <li class="task-item" draggable="true">
+                    <span class="task-number">2.</span>
+                    <input type="checkbox" id="task-6">
+                    <label class="editable-label" data-type="task" for="task-6">Task 6</label>
+                    <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+                </li>
+            </ul>
+            <div class="add-task">
+                <input type="text" id="input-backlog" placeholder="Obiectiv nou...">
+                <button onclick="addTask('backlog')">Adaugă</button>
+            </div>
+                <div class="progress" id="progress-backlog"></div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="plans-section" id="card-plans">
+        <div class="resize-handle"></div>
+        <h2><span style="font-size: 1.2em;">💡</span>PLANURI</h2>
+        <ul class="plans-list" id="plans">
+            <li class="plan-item" draggable="true">
+                <input type="checkbox" id="plan-1">
+                <label class="editable-label">Plan important 1</label>
+                <button class="plan-delete-btn" onclick="deletePlan(this)">×</button>
+            </li>
+            <li class="plan-item" draggable="true">
+                <input type="checkbox" id="plan-2">
+                <label class="editable-label">Plan important 2</label>
+                <button class="plan-delete-btn" onclick="deletePlan(this)">×</button>
+            </li>
+        </ul>
+        <div class="add-plan">
+            <input type="text" id="input-plans" placeholder="Adaugă plan...">
+            <button onclick="addPlan()">Adauga</button>
+        </div>
+    </div>
+
+    <script>
+        function deleteTask(button) {
+            const taskItem = button.closest('.task-item');
+            const taskText = taskItem.querySelector('label').textContent;
+
+            if (confirm(`Sterge "${taskText}"?`)) {
+                taskItem.remove();
+                saveTasks();
+            }
+        }
+
+        function deleteProtocol(button) {
+            const protocolItem = button.closest('.protocol-item');
+            const protocolText = protocolItem.querySelector('label').textContent;
+
+            if (confirm(`Sterge "${protocolText}"?`)) {
+                protocolItem.remove();
+                updateNumbers();
+                saveProtocol();
+            }
+        }
+
+        function saveTasks() {
+            const data = {
+                today: getTasks('today'),
+                week: getTasks('week'),
+                backlog: getTasks('backlog'),
+                plans: getPlans()
+            };
+            localStorage.setItem('tasks', JSON.stringify(data));
+            updateProgress();
+        }
+
+        function getPlans() {
+            const plans = [];
+            document.querySelectorAll('#plans .plan-item').forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const label = item.querySelector('label');
+                plans.push({
+                    text: label.textContent,
+                    done: checkbox.checked
+                });
+            });
+            return plans;
+        }
+
+        function addPlan() {
+            const input = document.getElementById('input-plans');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const list = document.getElementById('plans');
+            const li = document.createElement('li');
+            li.className = 'plan-item';
+            li.draggable = true;
+            const id = Date.now();
+            li.innerHTML = `
+                <input type="checkbox" id="plan-${id}" onchange="saveTasks()">
+                <label class="editable-label">${text}</label>
+                <button class="plan-delete-btn" onclick="deletePlan(this)">×</button>
+            `;
+            list.appendChild(li);
+            input.value = '';
+            saveTasks();
+        }
+
+        function deletePlan(btn) {
+            const item = btn.closest('.plan-item');
+            const text = item.querySelector('label').textContent;
+
+            if (confirm(`Sterge "${text}"?`)) {
+                item.remove();
+                saveTasks();
+            }
+        }
+
+        function getTasks(section) {
+            const tasks = [];
+            document.querySelectorAll(`#${section} input[type="checkbox"]`).forEach(checkbox => {
+                tasks.push({
+                    text: checkbox.nextElementSibling.textContent,
+                    done: checkbox.checked
+                });
+            });
+            return tasks;
+        }
+
+        function addTask(section) {
+            const input = document.getElementById(`input-${section}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            const list = document.getElementById(section);
+            const li = document.createElement('li');
+            li.className = 'task-item';
+            li.draggable = true;
+            const id = Date.now();
+            const number = list.querySelectorAll('.task-item').length + 1;
+            li.innerHTML = `
+                <span class="task-number">${number}.</span>
+                <input type="checkbox" id="task-${id}" onchange="saveTasks()">
+                <label class="editable-label">${text}</label>
+                <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+            `;
+            list.appendChild(li);
+            input.value = '';
+            updateNumbers();
+            saveTasks();
+        }
+
+        function updateNumbers() {
+            ['today', 'week', 'backlog'].forEach(section => {
+                const items = document.querySelectorAll(`#${section} .task-item`);
+                items.forEach((item, index) => {
+                    const numberSpan = item.querySelector('.task-number');
+                    if (numberSpan) {
+                        numberSpan.textContent = (index + 1) + '.';
+                    }
+                });
+            });
+        }
+
+        function updateProgress() {
+            ['today', 'week', 'backlog'].forEach(section => {
+                const checkboxes = document.querySelectorAll(`#${section} input[type="checkbox"]`);
+                const checked = Array.from(checkboxes).filter(c => c.checked).length;
+                const total = checkboxes.length;
+                const progress = document.getElementById(`progress-${section}`);
+                if (total > 0) {
+                    progress.textContent = `${checked} / ${total} îndeplinite`;
+                }
+            });
+        }
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', saveTasks);
+        });
+
+        let draggedItem = null;
+        let draggedProtocol = null;
+        let draggedPlan = null;
+
+        document.addEventListener('dragstart', (e) => {
+            const protocolItem = e.target.closest('.protocol-item');
+            if (protocolItem) {
+                draggedProtocol = protocolItem;
+                protocolItem.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                return;
+            }
+
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                draggedItem = taskItem;
+                taskItem.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+
+        document.addEventListener('dragend', (e) => {
+            document.querySelectorAll('.protocol-item').forEach(item => {
+                item.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+            });
+            document.querySelectorAll('.task-item').forEach(item => {
+                item.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+            });
+            document.querySelectorAll('.task-list').forEach(list => {
+                list.classList.remove('drag-over');
+            });
+            document.querySelectorAll('.protocol-list').forEach(list => {
+                list.classList.remove('drag-over');
+            });
+            draggedItem = null;
+            draggedProtocol = null;
+        });
+
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            const protocolList = e.target.closest('.protocol-list');
+            const protocolItem = e.target.closest('.protocol-item');
+
+            if (protocolList && draggedProtocol) {
+                protocolList.classList.add('drag-over');
+
+                if (protocolItem && protocolItem !== draggedProtocol) {
+                    const rect = protocolItem.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+
+                    document.querySelectorAll('.protocol-item').forEach(item => {
+                        item.classList.remove('drag-over-top', 'drag-over-bottom');
+                    });
+
+                    if (e.clientY < midpoint) {
+                        protocolItem.classList.add('drag-over-top');
+                    } else {
+                        protocolItem.classList.add('drag-over-bottom');
+                    }
+                }
+                return;
+            }
+
+            const taskList = e.target.closest('.task-list');
+            const taskItem = e.target.closest('.task-item');
+
+            if (taskList) {
+                taskList.classList.add('drag-over');
+
+                if (taskItem && taskItem !== draggedItem) {
+                    const rect = taskItem.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+
+                    document.querySelectorAll('.task-item').forEach(item => {
+                        item.classList.remove('drag-over-top', 'drag-over-bottom');
+                    });
+
+                    if (e.clientY < midpoint) {
+                        taskItem.classList.add('drag-over-top');
+                    } else {
+                        taskItem.classList.add('drag-over-bottom');
+                    }
+                }
+            }
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            if (!e.target.closest('.task-list')) {
+                document.querySelectorAll('.task-list').forEach(list => {
+                    list.classList.remove('drag-over');
+                });
+                document.querySelectorAll('.task-item').forEach(item => {
+                    item.classList.remove('drag-over-top', 'drag-over-bottom');
+                });
+            }
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+
+            const dropZone = e.target.closest('.task-list');
+            const targetItem = e.target.closest('.task-item:not(.protocol-item)');
+            const plansList = e.target.closest('.plans-list');
+            const protocolList = e.target.closest('.protocol-list');
+            const targetProtocol = e.target.closest('.protocol-item');
+
+            if (draggedProtocol && protocolList) {
+                if (targetProtocol && targetProtocol !== draggedProtocol) {
+                    const rect = targetProtocol.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (e.clientY < midpoint) {
+                        targetProtocol.parentNode.insertBefore(draggedProtocol, targetProtocol);
+                    } else {
+                        targetProtocol.parentNode.insertBefore(draggedProtocol, targetProtocol.nextSibling);
+                    }
+                } else {
+                    protocolList.appendChild(draggedProtocol);
+                }
+                saveProtocol();
+            } else if (draggedItem && dropZone) {
+                if (targetItem && targetItem !== draggedItem) {
+                    const rect = targetItem.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+
+                    if (e.clientY < midpoint) {
+                        targetItem.parentNode.insertBefore(draggedItem, targetItem);
+                    } else {
+                        targetItem.parentNode.insertBefore(draggedItem, targetItem.nextSibling);
+                    }
+                } else {
+                    dropZone.appendChild(draggedItem);
+                }
+
+                dropZone.classList.remove('drag-over');
+                updateNumbers();
+                saveTasks();
+            } else if (draggedPlan && plansList) {
+                const targetPlan = e.target.closest('.plan-item');
+                if (targetPlan && targetPlan !== draggedPlan) {
+                    const rect = targetPlan.getBoundingClientRect();
+                    if (e.clientX < rect.left + rect.width / 2) {
+                        targetPlan.parentNode.insertBefore(draggedPlan, targetPlan);
+                    } else {
+                        targetPlan.parentNode.insertBefore(draggedPlan, targetPlan.nextSibling);
+                    }
+                } else {
+                    plansList.appendChild(draggedPlan);
+                }
+                saveTasks();
+            }
+
+            document.querySelectorAll('.task-item').forEach(item => {
+                item.classList.remove('drag-over-top', 'drag-over-bottom');
+            });
+        });
+
+
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const inputs = document.querySelectorAll('.add-task input');
+                inputs.forEach(input => {
+                    if (document.activeElement === input) {
+                        const section = input.id.replace('input-', '');
+                        addTask(section);
+                    }
+                });
+            }
+        });
+
+        function toggleDarkMode() {
+            const isDarkMode = document.body.classList.toggle('dark-mode');
+            const btn = document.getElementById('theme-toggle');
+            btn.textContent = isDarkMode ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDarkMode);
+        }
+
+        function loadTheme() {
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('theme-toggle').textContent = '☀️';
+            }
+        }
+
+        function updateDate() {
+            const today = new Date();
+            const months = ['Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'];
+
+            const formatDate = (date) => `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+            const formatDateRange = (start, end) => `${start.getDate()}-${end.getDate()} ${months[end.getMonth()]} ${end.getFullYear()}`;
+
+            // Today
+            document.getElementById('today-date').textContent = formatDate(today);
+
+            // Tomorrow
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            document.getElementById('week-date').textContent = formatDate(tomorrow);
+
+            // Next week (Mon-Sun)
+            const dayOfWeek = today.getDay();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            const nextMonday = new Date(sunday);
+            nextMonday.setDate(sunday.getDate() + 1);
+            const nextSunday = new Date(nextMonday);
+            nextSunday.setDate(nextMonday.getDate() + 6);
+
+            document.getElementById('backlog-date').textContent = formatDateRange(nextMonday, nextSunday);
+        }
+
+        function saveProtocol() {
+            const protocol = [];
+            document.querySelectorAll('#protocol .protocol-item').forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const label = item.querySelector('label');
+                protocol.push({
+                    text: label.textContent,
+                    done: checkbox.checked
+                });
+            });
+
+            const data = {
+                date: new Date().toDateString(),
+                protocol: protocol
+            };
+            localStorage.setItem('protocol', JSON.stringify(data));
+        }
+
+        function loadProtocol() {
+            const saved = localStorage.getItem('protocol');
+            if (!saved) return;
+
+            const data = JSON.parse(saved);
+            const today = new Date().toDateString();
+
+            if (data.date === today && data.protocol.length > 0) {
+                const protocolList = document.getElementById('protocol');
+                const existingCount = protocolList.querySelectorAll('.protocol-item').length;
+
+                // Restore existing items state
+                document.querySelectorAll('#protocol .protocol-item').forEach((item, index) => {
+                    const checkbox = item.querySelector('input[type="checkbox"]');
+                    if (data.protocol[index]) {
+                        checkbox.checked = data.protocol[index].done;
+                        item.querySelector('label').textContent = data.protocol[index].text;
+                    }
+                });
+
+                // Add new items from localStorage
+                for (let i = existingCount; i < data.protocol.length; i++) {
+                    const li = document.createElement('li');
+                    li.className = 'protocol-item';
+                    li.draggable = true;
+                    const id = `protocol-${i}`;
+                    const number = i + 1;
+                    li.innerHTML = `
+                        <span class="protocol-number">${number}.</span>
+                        <input type="checkbox" id="${id}" ${data.protocol[i].done ? 'checked' : ''} onchange="saveProtocol()">
+                        <label class="editable-label">${data.protocol[i].text}</label>
+                        <button class="delete-protocol-btn" onclick="deleteProtocol(this)">Sterge</button>
+                    `;
+                    protocolList.appendChild(li);
+                }
+            }
+        }
+
+        function addProtocol() {
+            const input = document.getElementById('input-protocol');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const list = document.getElementById('protocol');
+            const index = list.querySelectorAll('.protocol-item').length;
+            const li = document.createElement('li');
+            li.className = 'protocol-item';
+            const id = `protocol-${Date.now()}`;
+            const number = index + 1;
+            li.innerHTML = `
+                <span class="protocol-number">${number}.</span>
+                <input type="checkbox" id="${id}" onchange="saveProtocol()">
+                <label for="${id}">${text}</label>
+            `;
+            list.appendChild(li);
+            input.value = '';
+            saveProtocol();
+        }
+
+        function resetProtocolDaily() {
+            const saved = localStorage.getItem('protocol');
+            if (!saved) return;
+
+            const data = JSON.parse(saved);
+            const today = new Date().toDateString();
+
+            if (data.date !== today) {
+                document.querySelectorAll('#protocol input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                saveProtocol();
+            }
+        }
+
+        function carryOverUnfinishedTasks() {
+            const saved = localStorage.getItem('tasks');
+            if (!saved) return;
+
+            const data = JSON.parse(saved);
+            const unfinishedToday = data.today.filter(task => !task.done);
+            const tomorrowTasks = data.week || []; // Toate taskurile din MÂINE
+
+            // Combină taskurile nebifate din azi + toate din MÂINE în noua zi
+            data.today = [...unfinishedToday, ...tomorrowTasks];
+            data.week = []; // Curăță MÂINE pentru ziua nouă
+
+            localStorage.setItem('tasks', JSON.stringify(data));
+
+            // Reîncarcă pagina pentru a afișa schimbările
+            location.reload();
+        }
+
+        function scheduleNextUpdate() {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            const timeUntilMidnight = tomorrow - now;
+            setTimeout(() => {
+                carryOverUnfinishedTasks();
+                updateDate();
+                scheduleNextUpdate();
+            }, timeUntilMidnight);
+        }
+
+        function loadTasks() {
+            const saved = localStorage.getItem('tasks');
+            if (!saved) return;
+
+            const data = JSON.parse(saved);
+
+            ['today', 'week', 'backlog'].forEach(section => {
+                const list = document.getElementById(section);
+                const savedTasks = data[section] || [];
+
+                if (savedTasks.length > 0) {
+                    list.innerHTML = '';
+                    savedTasks.forEach((task, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'task-item';
+                        li.draggable = true;
+                        const id = Date.now() + index;
+                        li.innerHTML = `
+                            <span class="task-number">${index + 1}.</span>
+                            <input type="checkbox" id="task-${id}" ${task.done ? 'checked' : ''} onchange="saveTasks()">
+                            <label class="editable-label">${task.text}</label>
+                            <button class="delete-btn" onclick="deleteTask(this)">Sterge</button>
+                        `;
+                        list.appendChild(li);
+                    });
+                }
+            });
+
+            const plansList = document.getElementById('plans');
+            const savedPlans = data.plans || [];
+            if (savedPlans.length > 0) {
+                plansList.innerHTML = '';
+                savedPlans.forEach((plan, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'plan-item';
+                    li.draggable = true;
+                    const id = Date.now() + index;
+                    li.innerHTML = `
+                        <input type="checkbox" id="plan-${id}" ${plan.done ? 'checked' : ''} onchange="saveTasks()">
+                        <label class="editable-label">${plan.text}</label>
+                        <button class="plan-delete-btn" onclick="deletePlan(this)">×</button>
+                    `;
+                    plansList.appendChild(li);
+                });
+            }
+
+            updateNumbers();
+        }
+
+        document.addEventListener('click', (e) => {
+            const checkbox = e.target.closest('input[type="checkbox"]');
+            if (checkbox) {
+                const item = checkbox.closest('.protocol-item, .task-item, .plan-item');
+                if (item.classList.contains('protocol-item')) saveProtocol();
+                else if (item.classList.contains('task-item')) saveTasks();
+                else if (item.classList.contains('plan-item')) savePlans();
+                return;
+            }
+
+            const label = e.target.closest('.editable-label');
+            if (!label || label.getAttribute('data-editing')) return;
+
+            e.stopPropagation();
+            e.preventDefault();
+
+            const text = label.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = text;
+            input.style.padding = '4px 6px';
+            input.style.fontSize = '0.9em';
+            input.style.border = '1px solid var(--accent-color)';
+            input.style.borderRadius = '4px';
+            input.style.flex = '1';
+            input.style.background = 'var(--bg-card)';
+            input.style.color = 'var(--text-dark)';
+
+            label.setAttribute('data-editing', 'true');
+            label.innerHTML = '';
+            label.appendChild(input);
+            input.focus();
+            input.select();
+
+            const finishEditing = () => {
+                label.removeAttribute('data-editing');
+                label.textContent = input.value || text;
+                saveTasks();
+                saveProtocol();
+                savePlans();
+            };
+
+            input.addEventListener('blur', finishEditing);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') input.blur();
+                if (e.key === 'Escape') {
+                    label.removeAttribute('data-editing');
+                    label.textContent = text;
+                }
+            });
+        });
+
+        loadTheme();
+        updateDate();
+        scheduleNextUpdate();
+        resetProtocolDaily();
+        loadProtocol();
+        loadTasks();
+        updateProgress();
+
+        // Enter key handlers for input fields
+        document.getElementById('input-protocol').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addProtocol();
+        });
+        document.getElementById('input-today').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask('today');
+        });
+        document.getElementById('input-week').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask('week');
+        });
+        document.getElementById('input-backlog').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask('backlog');
+        });
+        document.getElementById('input-plans').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addPlan();
+        });
+
+        // Draggable cards system
+        let draggedCard = null;
+        let startPageX = 0;
+        let startPageY = 0;
+        let cardStartLeft = 0;
+        let cardStartTop = 0;
+
+        const cards = document.querySelectorAll('.protocol-section, .section, .plans-section');
+
+        cards.forEach(card => {
+            card.classList.add('draggable-card');
+
+            card.addEventListener('mousedown', (e) => {
+                if (e.target.closest('input, button, label, .task-item, .protocol-item, .plan-item, .resize-handle')) return;
+
+                draggedCard = card;
+                card.classList.add('dragging');
+                card.style.position = 'absolute';
+                card.style.zIndex = '1000';
+
+                startPageX = e.pageX;
+                startPageY = e.pageY;
+
+                // Get current position from style or computed style
+                cardStartLeft = parseFloat(card.style.left) || card.getBoundingClientRect().left;
+                cardStartTop = parseFloat(card.style.top) || card.getBoundingClientRect().top;
+            });
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!draggedCard) return;
+
+            const deltaX = e.pageX - startPageX;
+            const deltaY = e.pageY - startPageY;
+
+            draggedCard.style.left = (cardStartLeft + deltaX) + 'px';
+            draggedCard.style.top = (cardStartTop + deltaY) + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (draggedCard) {
+                draggedCard.classList.remove('dragging');
+                saveCardPositions();
+                draggedCard = null;
+            }
+        });
+
+        function saveCardPositions() {
+            const positions = {};
+            cards.forEach(card => {
+                const id = card.id;
+                positions[id] = {
+                    left: card.style.left,
+                    top: card.style.top
+                };
+            });
+            localStorage.setItem('cardPositions', JSON.stringify(positions));
+        }
+
+        function loadCardPositions() {
+            const positions = JSON.parse(localStorage.getItem('cardPositions') || '{}');
+            cards.forEach(card => {
+                const id = card.id;
+                if (positions[id] && positions[id].left && positions[id].top) {
+                    card.style.position = 'absolute';
+                    card.style.left = positions[id].left;
+                    card.style.top = positions[id].top;
+                }
+            });
+        }
+
+        loadCardPositions();
+
+        // Resize system
+        let resizingCard = null;
+        let resizeStartX = 0;
+        let resizeStartY = 0;
+        let resizeStartWidth = 0;
+        let resizeStartHeight = 0;
+
+        document.addEventListener('mousedown', (e) => {
+            const handle = e.target.closest('.resize-handle');
+            if (!handle) return;
+
+            resizingCard = handle.closest('.draggable-card');
+            if (!resizingCard) return;
+
+            resizeStartX = e.pageX;
+            resizeStartY = e.pageY;
+            resizeStartWidth = resizingCard.offsetWidth;
+            resizeStartHeight = resizingCard.offsetHeight;
+
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!resizingCard) return;
+
+            const deltaX = e.pageX - resizeStartX;
+            const deltaY = e.pageY - resizeStartY;
+
+            let minWidth = 200;
+            let minHeight = 200;
+
+            // Set different min sizes based on card type
+            if (resizingCard.id === 'card-protocol') {
+                minWidth = 280;
+                minHeight = 300;
+            } else if (resizingCard.id === 'card-today' || resizingCard.id === 'card-week' || resizingCard.id === 'card-backlog') {
+                minWidth = 350;
+                minHeight = 300;
+            } else if (resizingCard.id === 'card-plans') {
+                minWidth = 600;
+                minHeight = 250;
+            }
+
+            const newWidth = Math.max(resizeStartWidth + deltaX, minWidth);
+            const newHeight = Math.max(resizeStartHeight + deltaY, minHeight);
+
+            resizingCard.style.width = newWidth + 'px';
+            resizingCard.style.height = newHeight + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (resizingCard) {
+                saveCardDimensions();
+                resizingCard = null;
+            }
+        });
+
+        function saveCardDimensions() {
+            const dimensions = {};
+            cards.forEach(card => {
+                const id = card.id;
+                dimensions[id] = {
+                    width: card.style.width,
+                    height: card.style.height
+                };
+            });
+            localStorage.setItem('cardDimensions', JSON.stringify(dimensions));
+        }
+
+        function loadCardDimensions() {
+            const dimensions = JSON.parse(localStorage.getItem('cardDimensions') || '{}');
+            cards.forEach(card => {
+                const id = card.id;
+                if (dimensions[id] && dimensions[id].width && dimensions[id].height) {
+                    card.style.width = dimensions[id].width;
+                    card.style.height = dimensions[id].height;
+                }
+            });
+        }
+
+        loadCardDimensions();
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then((registration) => {
+                    console.log('Service Worker registered successfully:', registration);
+                })
+                .catch((error) => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('Install prompt ready');
+        });
+    </script>
+</body>
+</html>

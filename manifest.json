@@ -1,0 +1,54 @@
+{
+  "name": "Flow - Task Management",
+  "short_name": "Flow",
+  "description": "Manage your daily tasks, habits, and plans with Flow",
+  "start_url": "TODO.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#C291D6",
+  "background_color": "#FEF2E9",
+  "icons": [
+    {
+      "src": "assets/images/flow-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/flow-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/flow-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Task Today",
+      "short_name": "Add Task",
+      "description": "Quickly add a task for today",
+      "url": "TODO.html?action=add-task",
+      "icons": [
+        {
+          "src": "assets/images/flow-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "categories": ["productivity"],
+  "screenshots": [
+    {
+      "src": "assets/images/flow-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}
