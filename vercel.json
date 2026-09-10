@@ -1,5 +1,3 @@
 {
-  "buildCommand": "mkdir -p public && cp TODO.html public/index.html && cp -r assets public/ && cp manifest.json public/ && cp sw.js public/",
-  "outputDirectory": "public",
-  "cleanUrls": false
+  "outputDirectory": "public"
 }
