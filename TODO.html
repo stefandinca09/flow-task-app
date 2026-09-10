@@ -78,6 +78,11 @@
             cursor: grab;
             transition: box-shadow 0.2s;
             position: relative;
+            will-change: transform;
+        }
+
+        .draggable-card.dragging {
+            will-change: auto;
         }
 
         .draggable-card:hover {
@@ -1435,13 +1440,21 @@
             const deltaX = e.pageX - startPageX;
             const deltaY = e.pageY - startPageY;
 
-            draggedCard.style.left = (cardStartLeft + deltaX) + 'px';
-            draggedCard.style.top = (cardStartTop + deltaY) + 'px';
+            draggedCard.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
         });
 
         document.addEventListener('mouseup', () => {
             if (draggedCard) {
                 draggedCard.classList.remove('dragging');
+
+                // Convert transform to left/top for persistence
+                const deltaX = parseInt(draggedCard.style.transform.match(/translate\(([^,]+)/)?.[1] || 0);
+                const deltaY = parseInt(draggedCard.style.transform.match(/,\s*([^)]+)\)/)?.[1] || 0);
+
+                draggedCard.style.transform = '';
+                draggedCard.style.left = (cardStartLeft + deltaX) + 'px';
+                draggedCard.style.top = (cardStartTop + deltaY) + 'px';
+
                 saveCardPositions();
                 draggedCard = null;
             }
